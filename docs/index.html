@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magica Audio — Voice Changer & Audio Editor</title>
+    <meta name="description" content="Бесплатный офлайн аудио редактор и голосовой changer для Android. Эквалайзер, питч, реверберация, таймлайн, пресеты голосов.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0D0D1A;
+            color: #E0E0FF;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .stars {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 50% 0%, #1a1a3e 0%, #0D0D1A 70%);
+            z-index: -1;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        header {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #7C4DFF, #448AFF);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7C4DFF, #448AFF, #00BCD4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            color: #8888aa;
+            font-size: 18px;
+            margin-top: 8px;
+        }
+        .badge {
+            display: inline-block;
+            background: #7C4DFF22;
+            color: #7C4DFF;
+            border: 1px solid #7C4DFF44;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+        .hero {
+            text-align: center;
+            padding: 40px 0;
+        }
+        .hero h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .hero p {
+            color: #8888aa;
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #7C4DFF, #448AFF);
+            color: white;
+            box-shadow: 0 8px 32px rgba(124,77,255,0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(124,77,255,0.4);
+        }
+        .btn-secondary {
+            background: #1A1A2E;
+            color: #E0E0FF;
+            border: 1px solid #3A3A5C;
+        }
+        .btn-secondary:hover {
+            background: #252540;
+            border-color: #7C4DFF;
+        }
+        .buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .apk-info {
+            margin-top: 12px;
+            color: #666688;
+            font-size: 13px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            padding: 40px 0;
+        }
+        .feature-card {
+            background: #1A1A2E;
+            border: 1px solid #2A2A4E;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            border-color: #7C4DFF44;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .feature-icon { font-size: 32px; margin-bottom: 12px; }
+        .feature-card h3 { font-size: 17px; margin-bottom: 8px; color: #E0E0FF; }
+        .feature-card p { color: #8888aa; font-size: 14px; line-height: 1.5; }
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            padding: 20px 0;
+        }
+        .preset-item {
+            background: #1A1A2E;
+            border: 1px solid #2A2A4E;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .preset-item .icon { font-size: 28px; margin-bottom: 6px; }
+        .preset-item .name { font-size: 13px; font-weight: 600; color: #E0E0FF; }
+        section { padding: 40px 0; }
+        section h2 { font-size: 24px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+        .badge-container {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .tech-badge {
+            background: #1A1A2E;
+            border: 1px solid #2A2A4E;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #8888aa;
+        }
+        .screenshots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 20px 0;
+        }
+        .screenshot {
+            background: #1A1A2E;
+            border: 1px solid #2A2A4E;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            color: #666688;
+        }
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: #666688;
+            font-size: 13px;
+        }
+        footer a { color: #7C4DFF; text-decoration: none; }
+        @media (max-width: 600px) {
+            h1 { font-size: 28px; }
+            .hero h2 { font-size: 22px; }
+            .container { padding: 20px 16px; }
+            .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">🎵</div>
+                <h1>Magica Audio</h1>
+            </div>
+            <div class="subtitle">Voice Changer & Audio Editor для Android</div>
+            <div class="badge">✨ Полностью офлайн · Бесплатно · Без интернета</div>
+        </header>
+
+        <div class="hero">
+            <h2>Профессиональная обработка голоса<br>прямо на телефоне</h2>
+            <p>Загружайте аудио, меняйте голос до неузнаваемости, накладывайте эффекты и экспортируйте результат. Всё работает без интернета.</p>
+            <div class="buttons">
+                <a href="https://github.com/IlyaSigma111/MagicaAudio/releases/latest/download/app-debug.apk" class="btn btn-primary" id="downloadBtn">
+                    📥 Скачать APK
+                </a>
+                <a href="https://github.com/IlyaSigma111/MagicaAudio" class="btn btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    GitHub
+                </a>
+            </div>
+            <div class="apk-info" id="apkInfo">APK ~2 MB · Android 8.0+ · Подписано debug ключом</div>
+        </div>
+
+        <section>
+            <h2>⚡ Возможности</h2>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">🎚️</div>
+                    <h3>10-полосный эквалайзер</h3>
+                    <p>31 Hz — 16 kHz. Точная настройка тембра голоса с визуальной обратной связью.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎙️</div>
+                    <h3>Изменение голоса</h3>
+                    <p>Питч от -12 до +12 полутонов, скорость от 0.5x до 2x.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔊</div>
+                    <h3>Аудио эффекты</h3>
+                    <p>Реверберация, хорус, дисторшн, фильтры ВЧ/НЧ, эффект робота.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>Мультитрек таймлайн</h3>
+                    <p>Загружайте несколько аудиофайлов на временную шкалу и микшируйте.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎭</div>
+                    <h3>15+ голосовых пресетов</h3>
+                    <p>Чипмунк, монстр, робот, пришелец, эхо, демон и другие — в один клик.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📤</div>
+                    <h3>Экспорт в WAV/MP3</h3>
+                    <p>Всё локально, без интернета.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎭 Пресеты голосов</h2>
+            <div class="presets-grid">
+                <div class="preset-item"><div class="icon">🐹</div><div class="name">Чипмунк</div></div>
+                <div class="preset-item"><div class="icon">🧑‍🎤</div><div class="name">Глубокий бас</div></div>
+                <div class="preset-item"><div class="icon">🤖</div><div class="name">Робот</div></div>
+                <div class="preset-item"><div class="icon">👽</div><div class="name">Пришелец</div></div>
+                <div class="preset-item"><div class="icon">🎶</div><div class="name">Эхо-зал</div></div>
+                <div class="preset-item"><div class="icon">👹</div><div class="name">Монстр</div></div>
+                <div class="preset-item"><div class="icon">👶</div><div class="name">Ребёнок</div></div>
+                <div class="preset-item"><div class="icon">👴</div><div class="name">Старик</div></div>
+                <div class="preset-item"><div class="icon">📻</div><div class="name">Радио FM</div></div>
+                <div class="preset-item"><div class="icon">🤫</div><div class="name">Шёпот</div></div>
+                <div class="preset-item"><div class="icon">🎤</div><div class="name">Автотюн</div></div>
+                <div class="preset-item"><div class="icon">👿</div><div class="name">Демон</div></div>
+                <div class="preset-item"><div class="icon">🧝</div><div class="name">Эльф</div></div>
+                <div class="preset-item"><div class="icon">📞</div><div class="name">Телефон</div></div>
+                <div class="preset-item"><div class="icon">🌊</div><div class="name">Под водой</div></div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🛠 Технологии</h2>
+            <div class="badge-container">
+                <span class="tech-badge">Kotlin</span>
+                <span class="tech-badge">Jetpack Compose</span>
+                <span class="tech-badge">Material 3</span>
+                <span class="tech-badge">MediaCodec</span>
+                <span class="tech-badge">Биквад фильтры</span>
+                <span class="tech-badge">Pure DSP</span>
+                <span class="tech-badge">Android 8.0+</span>
+                <span class="tech-badge">100% Offline</span>
+            </div>
+        </section>
+
+        <section>
+            <h2>📥 Установка</h2>
+            <div style="background: #1A1A2E; border: 1px solid #2A2A4E; border-radius: 16px; padding: 24px; max-width: 600px; margin: 0 auto;">
+                <ol style="color: #8888aa; line-height: 2; padding-left: 20px;">
+                    <li>Скачайте APK файл по кнопке выше</li>
+                    <li>Откройте настройки Android → Безопасность</li>
+                    <li>Включите "Установка из неизвестных источников"</li>
+                    <li>Откройте скачанный APK и установите</li>
+                    <li>Готово! Всё работает без интернета 🎉</li>
+                </ol>
+            </div>
+        </section>
+
+        <section>
+            <h2>📱 Скриншоты</h2>
+            <div class="screenshots">
+                <div class="screenshot">📱 Главный экран</div>
+                <div class="screenshot">🎛 Редактор + EQ</div>
+                <div class="screenshot">🎭 Пресеты</div>
+                <div class="screenshot">📋 Таймлайн</div>
+            </div>
+        </section>
+
+        <footer>
+            <p>
+                <a href="https://github.com/IlyaSigma111/MagicaAudio">GitHub</a> ·
+                <a href="https://github.com/IlyaSigma111/MagicaAudio/releases">Releases</a> ·
+                <a href="https://github.com/IlyaSigma111/MagicaAudio/issues">Сообщить об ошибке</a>
+            </p>
+            <p style="margin-top: 8px;">Magica Audio — Open Source. MIT License.</p>
+        </footer>
+    </div>
+
+    <script>
+        fetch('https://api.github.com/repos/IlyaSigma111/MagicaAudio/releases/latest')
+            .then(r => r.json())
+            .then(data => {
+                const assets = data.assets || [];
+                const apk = assets.find(a => a.name.endsWith('.apk'));
+                if (apk) {
+                    document.getElementById('downloadBtn').href = apk.browser_download_url;
+                    document.getElementById('apkInfo').textContent = 
+                        `APK ${(apk.size / 1024 / 1024).toFixed(1)} MB · Android 8.0+ · ${data.tag_name}`;
+                }
+            })
+            .catch(() => {});
+    </script>
+</body>
+</html>
