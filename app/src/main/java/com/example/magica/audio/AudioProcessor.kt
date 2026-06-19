@@ -90,7 +90,7 @@ object AudioProcessor {
             val cacheDir = AudioUtils.getCacheDir(context)
             val outputFile = File(cacheDir, "track_${track.id}_preview.wav")
 
-            val pcmData = decodeToPCM(context, Uri.fromFile(File(track.filePath)), segmentDurationSec * 1000)
+            val pcmData = decodeToPCM(context, Uri.fromFile(File(track.filePath)), segmentDurationSec * 1000L)
                 ?: return@withContext null
 
             var samples = pcmData.first
@@ -460,15 +460,15 @@ object AudioProcessor {
             val samples = wavData.first
             val sampleRate = wavData.second
 
-            val mediaFormat = MediaFormat.createAudioFormat(MediaFormat.MIME_TYPE_AUDIO_AAC, sampleRate, 1)
-            mediaFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaFormat.AACObjectLC)
+            val mime = MediaFormat.MIMETYPE_AUDIO_AAC
+            val mediaFormat = MediaFormat.createAudioFormat(mime, sampleRate, 1)
             mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 192000)
 
             val muxer = MediaMuxer(outputMp3Path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
             val trackIndex = muxer.addTrack(mediaFormat)
             muxer.start()
 
-            val codec = MediaCodec.createEncoderByType(MediaFormat.MIME_TYPE_AUDIO_AAC)
+            val codec = MediaCodec.createEncoderByType(mime)
             codec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             codec.start()
 

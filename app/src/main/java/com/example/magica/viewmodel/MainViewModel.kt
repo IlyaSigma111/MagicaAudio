@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.magica.audio.AudioPlayer
 import com.example.magica.audio.AudioProcessor
 import com.example.magica.audio.AudioUtils
+import com.example.magica.model.AudioSettings
 import com.example.magica.model.TrackData
 import com.example.magica.model.VoicePreset
 import kotlinx.coroutines.Job

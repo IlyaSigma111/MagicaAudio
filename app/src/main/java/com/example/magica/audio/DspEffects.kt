@@ -2,11 +2,7 @@ package com.example.magica.audio
 
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.exp
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.pow
-import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -23,7 +19,7 @@ object DspEffects {
 
     fun applyPitchShift(samples: ShortArray, semitones: Float, sampleRate: Int): ShortArray {
         if (kotlin.math.abs(semitones) < 0.1f) return samples
-        val ratio = 2.0.pow(semitones / 12.0)
+        val ratio = 2.0.pow((semitones / 12.0).toDouble()).toFloat()
         val newSize = (samples.size / ratio).toInt()
         val out = ShortArray(newSize)
 
@@ -70,15 +66,17 @@ object DspEffects {
         val hasEq = bands.any { kotlin.math.abs(it) > 0.5f }
         if (!hasEq) return samples
 
-        val totalGain = 10f.pow(bands.sum() / (bands.size * 20f))
+        var totalGain = 0f
+        for (g in bands) totalGain += g
+        totalGain = 10f.pow(totalGain / (bands.size * 20f))
+
         val out = ShortArray(samples.size) { samples[it] }
 
         for ((i, gain) in bands.withIndex()) {
             if (kotlin.math.abs(gain) < 0.5f) continue
             val freq = frequencies[i]
-            val dbGain = gain
             val filter = BiquadFilter()
-            filter.calcPeakingEQ(sampleRate, freq, 1.0, dbGain)
+            filter.calcPeakingEQ(sampleRate, freq, 1.0, gain)
             for (j in out.indices) {
                 out[j] = filter.process(out[j])
             }
@@ -111,7 +109,6 @@ object DspEffects {
 
         val scale = (1.0f - damping) * roomSize * mix
         val wet = FloatArray(samples.size)
-        val dry = 1.0f - mix * 0.5f
 
         for (i in 0 until 4) {
             val delay = (combDelays[i] * roomSize).toInt().coerceAtLeast(1)
@@ -143,6 +140,7 @@ object DspEffects {
             }
         }
 
+        val dry = 1.0f - mix * 0.5f
         val out = ShortArray(samples.size)
         for (i in samples.indices) {
             val mixed = (samples[i] / 32768f) * dry + wet[i] * mix
@@ -153,12 +151,8 @@ object DspEffects {
 
     fun applyChorus(samples: ShortArray, mix: Float, sampleRate: Int): ShortArray {
         if (mix < 0.01f) return samples
-        val delayMs = 30f
-        val depthMs = 10f
-        val rate = 0.5f
-        val delaySamples = (delayMs * sampleRate / 1000f).toInt()
-        val depthSamples = (depthMs * sampleRate / 1000f).toInt()
-
+        val delaySamples = (30f * sampleRate / 1000f).toInt()
+        val depthSamples = (10f * sampleRate / 1000f).toInt()
         val maxDelay = delaySamples + depthSamples + 1
         val buf = FloatArray(maxDelay)
         var idx = 0
@@ -169,7 +163,7 @@ object DspEffects {
             val input = samples[i] / 32768f
             buf[idx] = input
 
-            phase += rate * 2f * PI.toFloat() / sampleRate
+            phase += 0.5f * 2f * PI.toFloat() / sampleRate
             val modulation = sin(phase) * depthSamples
             val readIdx = ((idx - delaySamples - modulation.toInt()) % maxDelay + maxDelay) % maxDelay
             val delayed = buf[readIdx.toInt()]
@@ -234,6 +228,7 @@ object DspEffects {
         private var a0 = 0.0
         private var a1 = 0.0
         private var a2 = 0.0
+        private var b0 = 0.0
         private var b1 = 0.0
         private var b2 = 0.0
         private var x1 = 0.0
@@ -243,7 +238,7 @@ object DspEffects {
 
         fun process(input: Short): Short {
             val x = input.toDouble() / 32768.0
-            val y = a0 * x + a1 * x1 + a2 * x2 - b1 * y1 - b2 * y2
+            val y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
             x2 = x1
             x1 = x
             y2 = y1
@@ -252,7 +247,7 @@ object DspEffects {
         }
 
         fun calcPeakingEQ(sampleRate: Int, freq: Float, q: Double, dbGain: Float) {
-            val a = 10.0.pow(dbGain / 40.0)
+            val a = 10.0.pow((dbGain / 40.0).toDouble())
             val omega = 2.0 * PI * freq / sampleRate
             val alpha = sin(omega) / (2.0 * q)
             val cosOmega = cos(omega)
@@ -265,11 +260,11 @@ object DspEffects {
             a2 = 1.0 - alpha / a
 
             val norm = 1.0 / a0
-            a0 = b0 * norm
-            a1 = b1 * norm
-            a2 = b2 * norm
-            b1 = a1 * norm
-            b2 = a2 * norm
+            b0 *= norm
+            b1 *= norm
+            b2 *= norm
+            a1 *= norm
+            a2 *= norm
         }
 
         fun calcLowPass(sampleRate: Int, cutoff: Float, q: Double) {
@@ -285,11 +280,11 @@ object DspEffects {
             a2 = 1.0 - alpha
 
             val norm = 1.0 / a0
-            a0 = b0 * norm
-            a1 = b1 * norm
-            a2 = b2 * norm
-            b1 = a1 * norm
-            b2 = a2 * norm
+            b0 *= norm
+            b1 *= norm
+            b2 *= norm
+            a1 *= norm
+            a2 *= norm
         }
 
         fun calcHighPass(sampleRate: Int, cutoff: Float, q: Double) {
@@ -305,11 +300,11 @@ object DspEffects {
             a2 = 1.0 - alpha
 
             val norm = 1.0 / a0
-            a0 = b0 * norm
-            a1 = b1 * norm
-            a2 = b2 * norm
-            b1 = a1 * norm
-            b2 = a2 * norm
+            b0 *= norm
+            b1 *= norm
+            b2 *= norm
+            a1 *= norm
+            a2 *= norm
         }
     }
 }

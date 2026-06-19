@@ -1,5 +1,6 @@
 package com.example.magica.ui.components
 
+import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +21,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,10 +52,14 @@ fun TimelineView(
     onToggleSolo: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val primary = MaterialTheme.colorScheme.primary
+
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = "Timeline",
-            color = MaterialTheme.colorScheme.onSurface,
+            color = onSurface,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
@@ -65,11 +69,11 @@ fun TimelineView(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(32.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .background(surfaceVariant.copy(alpha = 0.5f))
         ) {
-            val maxMs = totalDurationMs.coerceAtLeast(1000L)
             Canvas(modifier = Modifier.fillMaxWidth().height(32.dp)) {
                 val w = size.width
+                val maxMs = totalDurationMs.coerceAtLeast(1000L)
                 val segmentMs = when {
                     maxMs <= 10000 -> 1000L
                     maxMs <= 30000 -> 5000L
@@ -78,6 +82,10 @@ fun TimelineView(
                 }
                 val pixelsPerMs = w / maxMs
                 var t = 0L
+                val textPaint = Paint().apply {
+                    color = android.graphics.Color.argb(100, 255, 255, 255)
+                    textSize = 22f
+                }
                 while (t <= maxMs) {
                     val x = (t * pixelsPerMs).toFloat()
                     drawLine(
@@ -90,12 +98,7 @@ fun TimelineView(
                     if (t % 10000 == 0L) {
                         drawContext.canvas.nativeCanvas.drawText(
                             "${sec / 60}:%02d".format(sec % 60),
-                            x + 3f,
-                            20f,
-                            android.graphics.Paint().apply {
-                                color = android.graphics.Color.argb(100, 255, 255, 255)
-                                textSize = 22f
-                            }
+                            x + 3f, 20f, textPaint
                         )
                     }
                     t += segmentMs
@@ -146,16 +149,11 @@ fun TimelineView(
 
                     Text(
                         text = track.displayName,
-                        color = if (track.muted) Color.Gray else MaterialTheme.colorScheme.onSurface,
+                        color = if (track.muted) Color.Gray else onSurface,
                         fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         modifier = Modifier.width(72.dp)
                     )
-
-                    val totalPixels = size.width - 120f
-                    val pixelsPerMs = if (totalDurationMs > 0) totalPixels / totalDurationMs else 0f
-                    val trackStart = (track.startTimeMs * pixelsPerMs).toFloat()
-                    val trackWidth = (track.durationMs * pixelsPerMs).coerceAtLeast(20f)
 
                     Box(
                         modifier = Modifier
@@ -163,6 +161,12 @@ fun TimelineView(
                             .height(28.dp)
                     ) {
                         Canvas(modifier = Modifier.fillMaxWidth().height(28.dp)) {
+                            val paint = Paint().apply { color = android.graphics.Color.WHITE; textSize = 18f }
+                            val nameText = track.displayName
+                            val totalPixels = size.width
+                            val trackPixelsPerMs = if (totalDurationMs > 0) totalPixels / totalDurationMs else 0f
+                            val trackStart = (track.startTimeMs * trackPixelsPerMs).toFloat()
+                            val trackWidth = (track.durationMs * trackPixelsPerMs).coerceAtLeast(20f)
                             val rectOffset = trackStart.coerceAtLeast(0f)
                             val rectWidth = trackWidth.coerceAtMost(size.width - rectOffset - 4f).coerceAtLeast(4f)
                             drawRoundRect(
@@ -171,15 +175,8 @@ fun TimelineView(
                                 size = Size(rectWidth, 22f),
                                 topLeft = Offset(rectOffset, 3f)
                             )
-                            val nameText = track.displayName
                             drawContext.canvas.nativeCanvas.drawText(
-                                nameText,
-                                rectOffset + 6f,
-                                18f,
-                                android.graphics.Paint().apply {
-                                    color = android.graphics.Color.WHITE
-                                    textSize = 18f
-                                }
+                                nameText, rectOffset + 6f, 18f, paint
                             )
                         }
                     }

@@ -26,7 +26,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +45,9 @@ fun PlaybackControlBar(
     onSeek: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val surfaceColor = MaterialTheme.colorScheme.onSurface
+
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -70,32 +75,24 @@ fun PlaybackControlBar(
 
                 drawRoundRect(
                     color = Color.White.copy(alpha = 0.1f),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f),
-                    size = androidx.compose.ui.geometry.Size(w, 6f),
+                    cornerRadius = CornerRadius(4f),
+                    size = Size(w, 6f),
                     topLeft = Offset(0f, h / 2f - 3f)
                 )
 
                 val progress = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
                 if (progress > 0f) {
                     drawRoundRect(
-                        color = MaterialTheme.colorScheme.primary,
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f),
-                        size = androidx.compose.ui.geometry.Size(w * progress, 6f),
+                        color = primaryColor,
+                        cornerRadius = CornerRadius(4f),
+                        size = Size(w * progress, 6f),
                         topLeft = Offset(0f, h / 2f - 3f)
                     )
                 }
 
                 val thumbX = w * progress
-                drawCircle(
-                    color = MaterialTheme.colorScheme.primary,
-                    radius = 8f,
-                    center = Offset(thumbX, h / 2f)
-                )
-                drawCircle(
-                    color = Color.White,
-                    radius = 4f,
-                    center = Offset(thumbX, h / 2f)
-                )
+                drawCircle(color = primaryColor, radius = 8f, center = Offset(thumbX, h / 2f))
+                drawCircle(color = Color.White, radius = 4f, center = Offset(thumbX, h / 2f))
             }
         }
 
@@ -105,12 +102,12 @@ fun PlaybackControlBar(
         ) {
             Text(
                 text = formatTime(positionMs),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                color = surfaceColor.copy(alpha = 0.5f),
                 fontSize = 11.sp
             )
             Text(
                 text = formatTime(durationMs),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                color = surfaceColor.copy(alpha = 0.5f),
                 fontSize = 11.sp
             )
         }
@@ -121,19 +118,14 @@ fun PlaybackControlBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onStop) {
-                Icon(
-                    Icons.Default.Stop,
-                    contentDescription = "Stop",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(28.dp)
-                )
+                Icon(Icons.Default.Stop, "Stop", tint = surfaceColor, modifier = Modifier.size(28.dp))
             }
             Spacer(modifier = Modifier.width(16.dp))
             IconButton(
                 onClick = onPlayPause,
                 modifier = Modifier
                     .size(56.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .background(primaryColor, CircleShape)
             ) {
                 Icon(
                     if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -147,86 +139,6 @@ fun PlaybackControlBar(
 }
 
 @Composable
-fun KnobSlider(
-    label: String,
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-    min: Float = 0f,
-    max: Float = 1f,
-    valueDisplay: String? = null,
-) {
-    Column(
-        modifier = modifier.width(48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(
-                    MaterialTheme.colorScheme.surfaceVariant,
-                    CircleShape
-                )
-        ) {
-            Canvas(
-                modifier = Modifier
-                    .size(48.dp)
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures { change, _ ->
-                            change.consume()
-                            val delta = change.position.x / size.width
-                            val newValue = (value + delta * (max - min) * 0.02f)
-                                .coerceIn(min, max)
-                            onValueChange(newValue)
-                        }
-                    }
-            ) {
-                val cx = size.width / 2f
-                val cy = size.height / 2f
-                val radius = size.width / 2f - 4f
-                val normalized = ((value - min) / (max - min)).coerceIn(0f, 1f)
-                val angle = -135f + normalized * 270f
-
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.1f),
-                    radius = radius
-                )
-
-                drawArc(
-                    color = MaterialTheme.colorScheme.primary,
-                    startAngle = -135f,
-                    sweepAngle = normalized * 270f,
-                    useCenter = false,
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(3f),
-                    topLeft = Offset(cx - radius, cy - radius),
-                    size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
-                )
-
-                val rad = Math.toRadians(angle.toDouble())
-                val handleX = cx + kotlin.math.cos(rad).toFloat() * radius * 0.7f
-                val handleY = cy + kotlin.math.sin(rad).toFloat() * radius * 0.7f
-                drawCircle(
-                    color = MaterialTheme.colorScheme.primary,
-                    radius = 5f,
-                    center = Offset(handleX, handleY)
-                )
-            }
-        }
-        Text(
-            text = valueDisplay ?: String.format("%.2f", value),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium
-        )
-        Text(
-            text = label,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            fontSize = 9.sp
-        )
-    }
-}
-
-@Composable
 fun EffectSlider(
     label: String,
     value: Float,
@@ -236,20 +148,20 @@ fun EffectSlider(
     max: Float = 1f,
     showLabel: Boolean = true,
 ) {
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    val onSurface = MaterialTheme.colorScheme.onSurface
+
     Column(modifier = modifier) {
         if (showLabel) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = label,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 12.sp
-                )
+                Text(text = label, color = onSurface, fontSize = 12.sp)
                 Text(
                     text = String.format("%.0f%%", value * 100),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = primary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -280,30 +192,26 @@ fun EffectSlider(
 
                 drawRoundRect(
                     color = Color.White.copy(alpha = 0.1f),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f),
-                    size = androidx.compose.ui.geometry.Size(w, 8f),
+                    cornerRadius = CornerRadius(4f),
+                    size = Size(w, 8f),
                     topLeft = Offset(0f, h / 2f - 4f)
                 )
 
                 if (normalized > 0f) {
                     val fillColor = when {
-                        label.contains("Pitch") || label.contains("Тон") -> MaterialTheme.colorScheme.primary
-                        label.contains("Speed") || label.contains("Скор") -> MaterialTheme.colorScheme.secondary
-                        else -> MaterialTheme.colorScheme.primary
+                        label.contains("Pitch") || label.contains("Тон") -> primary
+                        label.contains("Speed") || label.contains("Скор") -> secondary
+                        else -> primary
                     }
                     drawRoundRect(
                         color = fillColor,
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f),
-                        size = androidx.compose.ui.geometry.Size(w * normalized, 8f),
+                        cornerRadius = CornerRadius(4f),
+                        size = Size(w * normalized, 8f),
                         topLeft = Offset(0f, h / 2f - 4f)
                     )
                 }
 
-                drawCircle(
-                    color = Color.White,
-                    radius = 6f,
-                    center = Offset(w * normalized, h / 2f)
-                )
+                drawCircle(color = Color.White, radius = 6f, center = Offset(w * normalized, h / 2f))
             }
         }
     }

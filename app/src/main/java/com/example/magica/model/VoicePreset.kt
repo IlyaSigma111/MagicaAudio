@@ -13,6 +13,7 @@ data class VoicePreset(
     val chorusMix: Float = 0f,
     val distortionGain: Float = 0f,
     val robotEffect: Boolean = false,
+    val volume: Float = 1.0f,
     val lowPassCutoff: Float = 20000f,
     val highPassCutoff: Float = 20f,
 ) {
@@ -28,6 +29,7 @@ data class VoicePreset(
         settings.chorusMix = chorusMix
         settings.distortionGain = distortionGain
         settings.robotEffect = robotEffect
+        settings.volume = volume
         settings.lowPassCutoff = lowPassCutoff
         settings.highPassCutoff = highPassCutoff
     }
